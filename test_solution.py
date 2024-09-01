@@ -3,7 +3,8 @@ from wrapt_timeout_decorator import timeout
 
 from solution import Solution
 
-LOCAL_TIMEOUT = 10
+LOCAL_TIMEOUT = 5
+
 
 class TestSolution(unittest.TestCase):
     def __init__(self, *args, **kwargs):
@@ -15,14 +16,16 @@ class TestSolution(unittest.TestCase):
         [beginWord, endWord] = ["hit", "cog"]
         wordList = ["hot", "dot", "dog", "lot", "log", "cog"]
         expected = [["hit", "hot", "dot", "dog", "cog"], ["hit", "hot", "lot", "log", "cog"]]
-        self.assertCountEqual(self.solution.findLadders(beginWord, endWord, wordList), expected)
+        actual = self.solution.findLadders(beginWord, endWord, wordList)
+        self.assertCountEqual(actual, expected)
 
     @timeout(LOCAL_TIMEOUT)
     def test_case_2(self):
         [beginWord, endWord] = ["hit", "cog"]
         wordList = ["hot", "dot", "dog", "lot", "log"]
         expected = []
-        self.assertCountEqual(self.solution.findLadders(beginWord, endWord, wordList), expected)
+        actual = self.solution.findLadders(beginWord, endWord, wordList)
+        self.assertCountEqual(actual, expected)
 
     @timeout(LOCAL_TIMEOUT)
     def test_case_19(self):
@@ -50,7 +53,8 @@ class TestSolution(unittest.TestCase):
                     ["qa", "pa", "pt", "st", "sq"], ["qa", "ma", "mt", "st", "sq"], ["qa", "la", "lt", "st", "sq"],
                     ["qa", "ma", "mr", "sr", "sq"], ["qa", "ba", "br", "sr", "sq"], ["qa", "ca", "cr", "sr", "sq"],
                     ["qa", "la", "lr", "sr", "sq"], ["qa", "fa", "fr", "sr", "sq"], ["qa", "ta", "tc", "sc", "sq"]]
-        self.assertCountEqual(self.solution.findLadders(beginWord, endWord, wordList), expected)
+        actual = self.solution.findLadders(beginWord, endWord, wordList)
+        self.assertCountEqual(actual, expected)
 
     @timeout(LOCAL_TIMEOUT)
     def test_case_21(self):
@@ -93,9 +97,17 @@ class TestSolution(unittest.TestCase):
                     "err", "him", "all", "pad", "hah", "hie", "aim"]
         expected = [['cet', 'cat', 'can', 'ian', 'inn', 'ins', 'its', 'ito', 'ibo', 'ibm', 'ism'],
                     ['cet', 'cot', 'con', 'ion', 'inn', 'ins', 'its', 'ito', 'ibo', 'ibm', 'ism']]
-        self.assertCountEqual(self.solution.findLadders(beginWord, endWord, wordList), expected)
+        actual = self.solution.findLadders(beginWord, endWord, wordList)
+        self.assertCountEqual(actual, expected)
 
-    @unittest.skip("current algorithm is not optimal")
+    @timeout(LOCAL_TIMEOUT)
+    def test_case_31(self):
+        [beginWord, endWord] = ["a", "c"]
+        wordList = ["a", "b", "c"]
+        expected = [["a", "c"]]
+        actual = self.solution.findLadders(beginWord, endWord, wordList)
+        self.assertCountEqual(actual, expected)
+
     @timeout(LOCAL_TIMEOUT)
     def test_case_32(self):
         [beginWord, endWord] = ["aaaaa", "ggggg"]
@@ -148,4 +160,28 @@ class TestSolution(unittest.TestCase):
             ['aaaaa', 'aaaaz', 'aaawz', 'aavwz', 'avvwz', 'vvvwz', 'vvvww', 'wvvww', 'wwvww', 'wwwww', 'ywwww', 'yywww',
              'yyyww', 'yyyyw', 'yyyyy', 'xyyyy', 'xxyyy', 'xxxyy', 'xxxxy', 'xxxxx', 'gxxxx', 'ggxxx', 'gggxx', 'ggggx',
              'ggggg']]
-        self.assertCountEqual(self.solution.findLadders(beginWord, endWord, wordList), expected)
+        actual = self.solution.findLadders(beginWord, endWord, wordList)
+        self.assertCountEqual(actual, expected)
+
+    @timeout(LOCAL_TIMEOUT)
+    def test_case_34(self):
+        [beginWord, endWord] = ["cater", "mangy"]
+        wordList = ["kinds", "taney", "mangy", "pimps", "belly", "liter", "cooks", "finny", "buddy", "hewer", "roves",
+                    "lusts", "toots", "fully", "acorn", "junes", "araby", "visas", "pyres", "siren", "limps", "paved",
+                    "marla", "tulsa", "foxes", "purls", "stats", "bidet", "milky", "payee", "horny", "tanks", "mints",
+                    "cindy", "forms", "files", "fucks", "dolts", "welts", "dykes", "riced", "rebel", "gulfs", "bully",
+                    "meets", "tidal", "surer", "gecko", "noyes", "rents", "aaron", "rafts", "roils", "sower", "dicey",
+                    "sties", "jamal", "bases", "locus", "gusts", "briar", "gills", "filly", "mixes", "fjord", "aggie",
+                    "tails", "funks", "freon", "roods", "links", "natal", "melds", "abide", "hardy", "lands", "unpin",
+                    "loges", "weest", "rices", "dicks", "gyros", "hands", "quoit", "hater", "rings", "loxed", "weeds",
+                    "coeds", "handy", "boxer", "jamar", "cokes", "earls", "tings", "haley", "tangy", "hinds", "cater",
+                    "mores", "lloyd", "bayes", "slice", "taker", "piped", "doses", "sides", "gorge", "sorta", "gavel",
+                    "lanes", "wrote", "haney", "monet", "mikes", "bared", "pelts", "fails", "curry", "waken", "jaded",
+                    "halos", "welds", "danes", "assad", "waded", "agree", "bents", "comet", "train", "crags", "fifes",
+                    "rared", "noons", "scums", "steep", "haler", "waxen", "carey", "gamay", "larry", "diver", "honer",
+                    "mandy", "poxed", "coded", "waned", "sades", "clair", "fared", "hangs", "sully", "tiled", "stoic",
+                    "docks", "cloth"]
+        expected = [["cater", "hater", "haler", "haley", "haney", "taney", "tangy", "mangy"],
+                    ["cater", "hater", "haler", "haley", "haney", "handy", "mandy", "mangy"]]
+        actual = self.solution.findLadders(beginWord, endWord, wordList)
+        self.assertCountEqual(actual, expected)
