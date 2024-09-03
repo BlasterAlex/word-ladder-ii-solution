@@ -1,8 +1,10 @@
-from typing import List, Set, NamedTuple
+from typing import List, Set, Dict, NamedTuple
 import queue
 
 
 class QueuedWord(NamedTuple):
+    """Word in processing queue"""
+
     word: str
     "Processed word"
 
@@ -13,19 +15,27 @@ class QueuedWord(NamedTuple):
     "Level in path relative to beginning/end"
 
 
-class Solution:
-    def __init__(self):
-        self.positionLetters = []
-        self.wordNeighborsCache = {}
-        self.wordSet = set()
+class WordTreeNode(NamedTuple):
+    """Word in hierarchy tree"""
 
-        self.wordQueue = queue.Queue()
-        self.forwardWordPaths = {}
-        self.backwardWordPaths = {}
-        self.forwardVisited = {}
-        self.backwardVisited = {}
+    children: Set = set()
+    "Child words in hierarchy tree"
+
+    level: int = 1
+    "Level in hierarchy tree"
+
+
+class Solution:
+    wordSet: Set[str]
+    positionLetters: List[Set[str]]
+    wordNeighborsCache: Dict[str, Set[str]]
+    forwardWordTree: Dict[str, WordTreeNode]
+    backwardWordTree: Dict[str, WordTreeNode]
+    wordQueue = queue.Queue()
 
     def prepareData(self, beginWord: str, endWord: str, wordList: List[str]):
+        """Required data initialization"""
+
         self.positionLetters = []
         self.wordNeighborsCache = {}
         self.wordSet = set(wordList)
@@ -37,23 +47,23 @@ class Solution:
                 elif c not in self.positionLetters[i]:
                     self.positionLetters[i].add(c)
 
-        self.forwardWordPaths = {}
-        self.backwardWordPaths = {}
-        self.forwardVisited = {}
-        self.backwardVisited = {}
+        self.forwardWordTree = {}
+        self.backwardWordTree = {}
 
         if not self.wordQueue.empty():
             self.wordQueue = queue.Queue()
 
         for w in self.findWordNeighbors(beginWord):
-            self.forwardWordPaths[w] = [[beginWord, w]]
+            self.forwardWordTree[w] = WordTreeNode({beginWord})
             self.wordQueue.put(QueuedWord(w, True))
 
         for w in self.findWordNeighbors(endWord):
-            self.backwardWordPaths[w] = [[w, endWord]]
+            self.backwardWordTree[w] = WordTreeNode({endWord})
             self.wordQueue.put(QueuedWord(w, False))
 
     def findWordNeighbors(self, word: str) -> Set[str]:
+        """Getting a list of all adjacent words with result caching"""
+
         if word in self.wordNeighborsCache:
             return self.wordNeighborsCache[word]
 
@@ -69,48 +79,60 @@ class Solution:
         self.wordNeighborsCache[word] = neighbors
         return neighbors
 
-    def visitNeighbor(self, qWord: QueuedWord, neighbor: str) -> bool:
-        """Checking that this neighbor has not been visited before in this path"""
-        visited = self.forwardVisited if qWord.forward else self.backwardVisited
-        word = qWord.word
-        if word in visited:
-            if neighbor in visited[word]:
-                return True
-            else:
-                visited[word].add(neighbor)
-        else:
-            visited[word] = {neighbor}
-        return False
+    def wordPathFound(self, qWord: QueuedWord) -> bool:
+        """Checking the condition for finding a new path intersection"""
 
-    def wordFound(self, qWord: QueuedWord) -> bool:
         if qWord.forward:
-            return qWord.word in self.backwardWordPaths
+            return qWord.word in self.backwardWordTree
         else:
-            return qWord.word in self.forwardWordPaths
+            return qWord.word in self.forwardWordTree
 
     def wordProcessing(self, qWord: QueuedWord):
+        """Processing word from word queue"""
+
         word = qWord.word
         forward = qWord.forward
-        level = qWord.level
+        neighborLevel = qWord.level + 1
 
         for neighbor in self.findWordNeighbors(word):
-            if self.visitNeighbor(qWord, neighbor):
-                continue
+            wordTree = self.forwardWordTree if forward else self.backwardWordTree
+            if word in wordTree:
+                if neighbor in wordTree[word].children:
+                    continue
 
-            wordPaths = self.forwardWordPaths if forward else self.backwardWordPaths
+            if neighbor in wordTree:
+                node = wordTree[neighbor]
+                if node.level == neighborLevel:
+                    node.children.add(word)
+            else:
+                wordTree[neighbor] = WordTreeNode({word}, neighborLevel)
+                self.wordQueue.put(QueuedWord(neighbor, forward, neighborLevel))
+
+    def buildCrossPaths(self, point: str) -> List[List[str]]:
+        """Getting a list of all word paths that intersect at the given point"""
+
+        forwardPaths = self.buildWordPaths(point, True)
+        backwardPaths = self.buildWordPaths(point, False)
+        return [forwardPath + backwardPath[1:] for forwardPath in forwardPaths for backwardPath in backwardPaths]
+
+    def buildWordPaths(self, word: str, forward: bool) -> List[List[str]]:
+        """Getting a list of all word path """
+
+        wordTree = self.forwardWordTree if forward else self.backwardWordTree
+        if word not in wordTree:
+            return [[word]]
+
+        result = []
+        node = wordTree[word]
+
+        for child in node.children:
+            childPaths = self.buildWordPaths(child, forward)
             if forward:
-                wPaths = [wpath + [neighbor] for wpath in wordPaths[word]]
+                result += [childPath + [word] for childPath in childPaths]
             else:
-                wPaths = [[neighbor] + wpath for wpath in wordPaths[word]]
-            if len(wPaths) == 0:
-                continue
+                result += [[word] + childPath for childPath in childPaths]
 
-            self.wordQueue.put(QueuedWord(neighbor, forward, level + 1))
-            if neighbor in wordPaths:
-                if len(wPaths[0]) == len(wordPaths[neighbor][0]):
-                    wordPaths[neighbor] += wPaths
-            else:
-                wordPaths[neighbor] = wPaths
+        return result
 
     def findLadders(self, beginWord: str, endWord: str, wordList: List[str]) -> List[List[str]]:
         if endWord not in wordList:
@@ -123,7 +145,7 @@ class Solution:
         self.prepareData(beginWord, endWord, wordList)
 
         result = []
-        foundWords = set()
+        pathsFound = set()
         foundLevel = 0
         foundForward = False
 
@@ -131,14 +153,16 @@ class Solution:
         while not self.wordQueue.empty():
             qWord = self.wordQueue.get()
             if foundLevel > 0:
-                if qWord in foundWords or qWord.forward != foundForward or qWord.level > foundLevel:
+                # given path has already been found or all possible points of the same level have been processed
+                if qWord in pathsFound or qWord.forward != foundForward or qWord.level > foundLevel:
                     continue
-            if self.wordFound(qWord):
-                foundWords.add(qWord)
+            if self.wordPathFound(qWord):
+                # word path intersection point is found, save the paths
+                result += self.buildCrossPaths(qWord.word)
                 foundLevel, foundForward = qWord.level, qWord.forward
-                result += [forwardPaths + backwardPaths[1:] for forwardPaths in self.forwardWordPaths[qWord.word] for
-                           backwardPaths in self.backwardWordPaths[qWord.word]]
+                pathsFound.add(qWord)
             else:
+                # processing word from queue
                 self.wordProcessing(qWord)
 
         return result
