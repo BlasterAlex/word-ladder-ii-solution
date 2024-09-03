@@ -3,7 +3,7 @@ from wrapt_timeout_decorator import timeout
 
 from solution import Solution
 
-LOCAL_TIMEOUT = 5
+TEST_TIMEOUT = 1
 
 
 class TestSolution(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestSolution(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.solution = Solution()
 
-    @timeout(LOCAL_TIMEOUT)
+    @timeout(TEST_TIMEOUT)
     def test_case_1(self):
         [beginWord, endWord] = ["hit", "cog"]
         wordList = ["hot", "dot", "dog", "lot", "log", "cog"]
@@ -19,7 +19,7 @@ class TestSolution(unittest.TestCase):
         actual = self.solution.findLadders(beginWord, endWord, wordList)
         self.assertCountEqual(actual, expected)
 
-    @timeout(LOCAL_TIMEOUT)
+    @timeout(TEST_TIMEOUT)
     def test_case_2(self):
         [beginWord, endWord] = ["hit", "cog"]
         wordList = ["hot", "dot", "dog", "lot", "log"]
@@ -27,7 +27,7 @@ class TestSolution(unittest.TestCase):
         actual = self.solution.findLadders(beginWord, endWord, wordList)
         self.assertCountEqual(actual, expected)
 
-    @timeout(LOCAL_TIMEOUT)
+    @timeout(TEST_TIMEOUT)
     def test_case_19(self):
         [beginWord, endWord] = ["qa", "sq"]
         wordList = ["si", "go", "se", "cm", "so", "ph", "mt", "db", "mb", "sb", "kr", "ln", "tm", "le", "av", "sm",
@@ -56,7 +56,7 @@ class TestSolution(unittest.TestCase):
         actual = self.solution.findLadders(beginWord, endWord, wordList)
         self.assertCountEqual(actual, expected)
 
-    @timeout(LOCAL_TIMEOUT)
+    @timeout(TEST_TIMEOUT)
     def test_case_21(self):
         [beginWord, endWord] = ["cet", "ism"]
         wordList = ["kid", "tag", "pup", "ail", "tun", "woo", "erg", "luz", "brr", "gay", "sip", "kay", "per", "val",
@@ -100,7 +100,7 @@ class TestSolution(unittest.TestCase):
         actual = self.solution.findLadders(beginWord, endWord, wordList)
         self.assertCountEqual(actual, expected)
 
-    @timeout(LOCAL_TIMEOUT)
+    @timeout(TEST_TIMEOUT)
     def test_case_31(self):
         [beginWord, endWord] = ["a", "c"]
         wordList = ["a", "b", "c"]
@@ -108,7 +108,7 @@ class TestSolution(unittest.TestCase):
         actual = self.solution.findLadders(beginWord, endWord, wordList)
         self.assertCountEqual(actual, expected)
 
-    @timeout(LOCAL_TIMEOUT)
+    @timeout(TEST_TIMEOUT)
     def test_case_32(self):
         [beginWord, endWord] = ["aaaaa", "ggggg"]
         wordList = ["aaaaa", "caaaa", "cbaaa", "daaaa", "dbaaa", "eaaaa", "ebaaa", "faaaa", "fbaaa", "gaaaa", "gbaaa",
@@ -163,7 +163,7 @@ class TestSolution(unittest.TestCase):
         actual = self.solution.findLadders(beginWord, endWord, wordList)
         self.assertCountEqual(actual, expected)
 
-    @timeout(LOCAL_TIMEOUT)
+    @timeout(TEST_TIMEOUT)
     def test_case_34(self):
         [beginWord, endWord] = ["cater", "mangy"]
         wordList = ["kinds", "taney", "mangy", "pimps", "belly", "liter", "cooks", "finny", "buddy", "hewer", "roves",
