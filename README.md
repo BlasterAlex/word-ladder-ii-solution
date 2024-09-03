@@ -57,6 +57,8 @@ not all paths will lead to `endWord`.
 To reduce the number of dead-end paths to be processed, we propose an approach with sequential breadth-first search
 starting from `beginWord` and `endWord` simultaneously until the intersection points of the paths are found.
 
+![algo-visualization](resources/algo-visualization.gif)
+
 ### Finding adjacent pairs (neighbors)
 
 Words are considered neighbors if they differ by a single letter. To quickly find all neighboring words, it is suggested
@@ -116,16 +118,29 @@ class QueuedWord(NamedTuple):
 #### Storing word paths
 
 To organize optimal storage of information about transformation sequences for each word, two dictionaries are used
-`forwardWordPaths` and `backwardWordPaths`.
+`forwardWordTree` and `backwardWordTree`.
 
-A word key stores the set of all possible paths to that word of minimum length from the beginning/end depending on
-travel direction (forward/backward).
+```python
+from typing import Set, NamedTuple
 
-This solves the problem of storing duplicate information about paths that have common parts. For example:
 
+class WordTreeNode(NamedTuple):
+    """Word in hierarchy tree"""
+
+    children: Set = set()
+    "Child words in hierarchy tree"
+
+    level: int = 1
+    "Level in hierarchy tree"
 ```
 
-```
+Each dictionary is a hierarchical tree of paths from the beginning/end word to
+the first path intersection. A word key stores a tree node that contains information about word level in path and a list
+of its child adjacent words.
+
+This method of storage solves several problems at once: reducing the memory used, since it does not store unnecessary
+duplicate parts of paths for each word, and controlling the uniqueness of each word in the path to avoid infinite
+loops.
 
 ##### Example
 
@@ -134,11 +149,14 @@ beginWord: hit
 endWord: cog
 wordSet: {hot, lot, log, cog}
 
-forwardWordPaths[hot]: hit -> hot
-forwardWordPaths[lot]: hit -> hot -> lot
+forwardWordTree[hot]: level=1, children={hit}
+forwardWordTree[lot]: level=2, children={hot}
 
-backwardWordPaths[log]: log <- cog
-backwardWordPaths[lot]: lot <- log <- cog
+backwardWordTree[log]: level=1, children={cog}
+backwardWordTree[lot]: level=2, children={log}
+
+lot is intersection point of path:
+  hit -> hot -> lot -> log -> cog
 ```
 
 #### Processing word in queue
@@ -149,12 +167,36 @@ Pairs of adjacent words with `beginWord` and `endWord` are added to queue before
 
 > If `beginWord` and `endWord` are adjacent, such a sequence is returned as the result and processing ends.
 
-The processing of a word in a queue occurs in several steps:
+The processing of word in processing queue occurs in several steps:
 
-- Checking search completion condition
+- Checking [search completion condition](#search-completion-condition)
 - Searching for adjacent words (neighbors)
-- For each adjacent word found, a check is performed to ensure that the given path has not been checked before
-- If this is the first visit to this word in the path, the word is added to the end/start of the neighbor path list,
-  depending on the current travel direction (forward/backward)
+- For each adjacent word found, a check is performed to ensure that the given word does not exist in the current path
+  (to avoid infinite loops)
+- If adjacent word does not exist in the current path but has already been processed in another path, this word is added
+  to `forwardWordTree`/`backwardWordTree` as new path to processed word and the next word in queue is taken into
+  processing
+- If adjacent word was encountered for the first time, this word is also added to processing queue
+- The next word in queue is taken into processing
 
 #### Search completion condition
+
+The processing of words in processing queue continues according to the algorithm described above until the first
+intersection of `forwardWordTree` and `backwardWordTree` is encountered. After that, no new words are added to
+processing queue.
+
+Found word travel direction (forward/backward) and the word level in path relative to the beginning/end are
+memorized, and all paths intersecting at that word are built by `forwardWordTree` and `backwardWordTree`.
+
+Other words in processing queue, which are also path crossing points, are checked for equality of **word level** and
+**travel direction** and their paths are also added to the result.
+
+## LeetCode stats
+
+### Runtime
+
+![leetcode-runtime](resources/leetcode-runtime.png)
+
+### Memory
+
+![leetcode-memory](resources/leetcode-memory.png)
