@@ -96,15 +96,18 @@ class Solution:
 
         for neighbor in self.findWordNeighbors(word):
             wordTree = self.forwardWordTree if forward else self.backwardWordTree
+            # checking that adjacent word is not already in path (to avoid infinite loops)
             if word in wordTree:
                 if neighbor in wordTree[word].children:
                     continue
 
             if neighbor in wordTree:
+                # adjacent word has already been processed, found new path
                 node = wordTree[neighbor]
                 if node.level == neighborLevel:
                     node.children.add(word)
             else:
+                # adjacent word is processed for the first time, add to processing queue
                 wordTree[neighbor] = WordTreeNode({word}, neighborLevel)
                 self.wordQueue.put(QueuedWord(neighbor, forward, neighborLevel))
 
@@ -145,22 +148,19 @@ class Solution:
         self.prepareData(beginWord, endWord, wordList)
 
         result = []
-        pathsFound = set()
-        foundLevel = 0
-        foundForward = False
+        foundLevel, foundForward = 0, False
 
         # word queue processing
         while not self.wordQueue.empty():
             qWord = self.wordQueue.get()
             if foundLevel > 0:
-                # given path has already been found or all possible points of the same level have been processed
-                if qWord in pathsFound or qWord.forward != foundForward or qWord.level > foundLevel:
+                # all possible points of the same level have been processed
+                if qWord.forward != foundForward or qWord.level > foundLevel:
                     continue
             if self.wordPathFound(qWord):
                 # word path intersection point is found, save the paths
                 result += self.buildCrossPaths(qWord.word)
                 foundLevel, foundForward = qWord.level, qWord.forward
-                pathsFound.add(qWord)
             else:
                 # processing word from queue
                 self.wordProcessing(qWord)
