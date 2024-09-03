@@ -15,7 +15,7 @@ class QueuedWord(NamedTuple):
     "Level in path relative to beginning/end"
 
 
-class WordHierarchyNode(NamedTuple):
+class WordTreeNode(NamedTuple):
     """Word in hierarchy tree"""
 
     children: Set = set()
@@ -24,14 +24,14 @@ class WordHierarchyNode(NamedTuple):
     level: int = 1
     "Level in hierarchy tree"
 
+
 class Solution:
     wordSet: Set[str]
     positionLetters: List[Set[str]]
     wordNeighborsCache: Dict[str, Set[str]]
-
+    forwardWordTree: Dict[str, WordTreeNode]
+    backwardWordTree: Dict[str, WordTreeNode]
     wordQueue = queue.Queue()
-    forwardWordHierarchy: Dict[str, WordHierarchyNode]
-    backwardWordHierarchy: Dict[str, WordHierarchyNode]
 
     def prepareData(self, beginWord: str, endWord: str, wordList: List[str]):
         self.positionLetters = []
@@ -45,18 +45,18 @@ class Solution:
                 elif c not in self.positionLetters[i]:
                     self.positionLetters[i].add(c)
 
-        self.forwardWordHierarchy = {}
-        self.backwardWordHierarchy = {}
+        self.forwardWordTree = {}
+        self.backwardWordTree = {}
 
         if not self.wordQueue.empty():
             self.wordQueue = queue.Queue()
 
         for w in self.findWordNeighbors(beginWord):
-            self.forwardWordHierarchy[w] = WordHierarchyNode({beginWord})
+            self.forwardWordTree[w] = WordTreeNode({beginWord})
             self.wordQueue.put(QueuedWord(w, True))
 
         for w in self.findWordNeighbors(endWord):
-            self.backwardWordHierarchy[w] = WordHierarchyNode({endWord})
+            self.backwardWordTree[w] = WordTreeNode({endWord})
             self.wordQueue.put(QueuedWord(w, False))
 
     def findWordNeighbors(self, word: str) -> Set[str]:
@@ -75,11 +75,11 @@ class Solution:
         self.wordNeighborsCache[word] = neighbors
         return neighbors
 
-    def wordFound(self, qWord: QueuedWord) -> bool:
+    def wordPathFound(self, qWord: QueuedWord) -> bool:
         if qWord.forward:
-            return qWord.word in self.backwardWordHierarchy
+            return qWord.word in self.backwardWordTree
         else:
-            return qWord.word in self.forwardWordHierarchy
+            return qWord.word in self.forwardWordTree
 
     def buildCrossPaths(self, point: str) -> List[List[str]]:
         forwardPaths = self.buildWordPaths(point, True)
@@ -87,12 +87,12 @@ class Solution:
         return [forwardPath + backwardPath[1:] for forwardPath in forwardPaths for backwardPath in backwardPaths]
 
     def buildWordPaths(self, word: str, forward: bool) -> List[List[str]]:
-        wordHierarchy = self.forwardWordHierarchy if forward else self.backwardWordHierarchy
-        if word not in wordHierarchy:
+        wordTree = self.forwardWordTree if forward else self.backwardWordTree
+        if word not in wordTree:
             return [[word]]
 
         result = []
-        node = wordHierarchy[word]
+        node = wordTree[word]
 
         for child in node.children:
             childPaths = self.buildWordPaths(child, forward)
@@ -109,17 +109,17 @@ class Solution:
         neighborLevel = qWord.level + 1
 
         for neighbor in self.findWordNeighbors(word):
-            wordHierarchy = self.forwardWordHierarchy if forward else self.backwardWordHierarchy
-            if word in wordHierarchy:
-                if neighbor in wordHierarchy[word].children:
+            wordTree = self.forwardWordTree if forward else self.backwardWordTree
+            if word in wordTree:
+                if neighbor in wordTree[word].children:
                     continue
 
-            if neighbor in wordHierarchy:
-                node = wordHierarchy[neighbor]
+            if neighbor in wordTree:
+                node = wordTree[neighbor]
                 if node.level == neighborLevel:
                     node.children.add(word)
             else:
-                wordHierarchy[neighbor] = WordHierarchyNode({word}, neighborLevel)
+                wordTree[neighbor] = WordTreeNode({word}, neighborLevel)
                 self.wordQueue.put(QueuedWord(neighbor, forward, neighborLevel))
 
     def findLadders(self, beginWord: str, endWord: str, wordList: List[str]) -> List[List[str]]:
@@ -143,7 +143,7 @@ class Solution:
             if foundLevel > 0:
                 if qWord in foundWords or qWord.forward != foundForward or qWord.level > foundLevel:
                     continue
-            if self.wordFound(qWord):
+            if self.wordPathFound(qWord):
                 foundWords.add(qWord)
                 foundLevel, foundForward = qWord.level, qWord.forward
                 result += self.buildCrossPaths(qWord.word)
