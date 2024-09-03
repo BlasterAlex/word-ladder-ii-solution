@@ -106,12 +106,10 @@ class Solution:
     def wordProcessing(self, qWord: QueuedWord):
         word = qWord.word
         forward = qWord.forward
-        level = qWord.level
+        neighborLevel = qWord.level + 1
 
         for neighbor in self.findWordNeighbors(word):
-            neighborLevel = level + 1
             wordHierarchy = self.forwardWordHierarchy if forward else self.backwardWordHierarchy
-
             if word in wordHierarchy:
                 if neighbor in wordHierarchy[word].children:
                     continue
